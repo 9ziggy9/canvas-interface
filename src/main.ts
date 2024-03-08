@@ -100,58 +100,59 @@ function drawNGon(
     ctx.lineWidth = borderWidth;
     ctx.stroke();
 }
-
-function runAt(callback: Function, interval: number) {
-    let frameCount = 0;
-
-    return () => {
-        frameCount++;
-        if (frameCount % interval === 0) {
-            callback();
-        }
-    }
+function clearCanvas(ctx: CanvasRenderingContext2D, cnv: HTMLCanvasElement) {
+  ctx.clearRect(0, 0, cnv.width, cnv.height);
+  drawCheckerBoard(ctx, [cnv.width, cnv.height], COLOR.lightGray, COLOR.white);
 }
 
-function animateAt30FPS(ctx: CanvasRenderingContext2D, cnv: HTMLCanvasElement) {
+function animateAtTargetFPS(
+  target: number,
+  ctx: CanvasRenderingContext2D,
+  cnv: HTMLCanvasElement,
+) {
   let lastFrameTime = 0; 
-  let nSides = 3; // Initial number of sides
 
-  // Function to increment sides and redraw
-  const incrementSides = runAt(() => {
-      nSides++;
-      if (nSides > 32) {
-          nSides = 3;
+  function scheduleRun<T>(
+    fn: (arg: T) => void,
+    initialValue: T,
+    interval: number,
+  )
+  {
+    let frameCount = 0;
+    let lastArg: T = initialValue;
+
+    return function(update?: (arg: T) => T) {
+      if (++frameCount % interval === 0) {
+        fn(lastArg);
+        if (typeof update === "function") lastArg = update(lastArg);
       }
-  }, 60); // Assuming 30FPS, this will trigger every 2 seconds
+    };
+  }
+
+  const scheduledGonDraw = scheduleRun<number>((n) => {
+    clearCanvas(ctx, cnv);
+    drawNGon(
+      ctx,
+      [cnv.width / 2, cnv.height / 2],
+      200, n, 10, COLOR.red, COLOR.blue,
+    );
+  }, 3, 1);
 
   function animationLoop(timestamp: number) {
     const timeSinceLastFrame = timestamp - lastFrameTime;
-    const targetFrameTime = 1000 / 30; // Approximately 33 milliseconds for 30 FPS
+    const targetFrameTime = 1000 / target;
 
     // Only update if enough time has passed for the next frame
     if (timeSinceLastFrame >= targetFrameTime) {
       lastFrameTime = timestamp;
 
-      ctx.clearRect(0, 0, cnv.width, cnv.height);
-      drawCheckerBoard(ctx, [cnv.width, cnv.height], COLOR.lightGray, COLOR.white);
-
-      drawNGon(
-        ctx,
-        [cnv.width / 2, cnv.height / 2],
-        100, nSides, 2,
-        COLOR.red, COLOR.blue
-      );
-
-      incrementSides();
+      scheduledGonDraw(n => n + 1);
 
       requestAnimationFrame(animationLoop); 
     } else {
-      // Skip this frame and continue to wait
-      requestAnimationFrame(animationLoop);
+      requestAnimationFrame(animationLoop); // skip and wait
     }
   }
-
-  // Start the animation loop
   requestAnimationFrame(animationLoop);
 }
 
@@ -160,13 +161,7 @@ function main(): void {
   const [ctx, cnv] = initCanvas();
   const regionEntire: [number, number] = [cnv.width, cnv.height];
   drawCheckerBoard(ctx, regionEntire, COLOR.lightGray, COLOR.white);
-  // drawCircle(ctx, [120,120], 50, 0, COLOR.red, COLOR.red);
-  drawNGon(
-    ctx,
-    [cnv.width / 2, cnv.height / 2],
-    120, 12, 4, COLOR.red, COLOR.blue
-  );
-  animateAt30FPS(ctx, cnv);
+  animateAtTargetFPS(30, ctx, cnv);
 }
 
 window.onload = main
