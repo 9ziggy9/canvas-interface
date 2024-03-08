@@ -79,16 +79,42 @@ function clearCanvas(ctx: CanvasRenderingContext2D, cnv: HTMLCanvasElement) {
   drawCheckerBoard(ctx, [cnv.width, cnv.height], COLOR.lightGray, COLOR.white);
 }
 
+type StateMap<T> = (state: T) => T;
+interface StateAggregator<T> {
+  attach: (m: StateMap<T>) => StateAggregator<T>;
+  run: () => void;
+}
+
+// MONAD !!!
+function returnStateAggregator<T>
+  (initialState: T, fn: (s: T) => void) : StateAggregator<T>
+{
+  let state: T = initialState;
+  let stateMaps: StateMap<T>[] = [];
+  return {
+    attach(m: StateMap<T>) {
+      stateMaps.push(m);
+      console.log(stateMaps);
+      return this;
+    },
+    run: () => {
+      state = stateMaps.reduce((cState, m) => m(cState), state);
+      fn(state);
+    },
+  }
+}
+
 interface PolygonState {
   sides: number;
   dy_dt: number; // Vertical velocity
   dx_dt: number; // horizontal velocity
   radius: number;
-  dir: number;
   center: [number, number]; // x, y coordinates of the center
   lineWidth: number; 
   strokeColor: string;
   fillColor: string;
+  morphDir: number;
+  frameCount: number;
 }
 
 function animateAtTargetFPS(
@@ -96,87 +122,74 @@ function animateAtTargetFPS(
   ctx: CanvasRenderingContext2D,
   cnv: HTMLCanvasElement,
 ) {
-  let lastFrameTime = 0; 
 
-  function attachState<T>(
-    fn: (arg: T) => void,
-    initialValue: T,
-  )
-  {
+    let lastFrameTime = 0; 
     let frameCount = 0;
-    let lastArg: T = initialValue;
 
-    return function(update: (arg: T) => T, throttle: number = 1) {
-      if (++frameCount % throttle === 0) {
-        fn(lastArg);
-        lastArg = update(lastArg);
-      }
+    const poly0: PolygonState = {
+      sides: 4,
+      dy_dt: 0,
+      dx_dt: 2,
+      radius: 40,
+      center: [cnv.width/2, cnv.height/2],
+      lineWidth: 4,
+      strokeColor: COLOR.red,
+      fillColor: COLOR.blue,
+      morphDir: 1,
+      frameCount: 0,
     };
-  }
 
-  const polygon: PolygonState = {
-    sides: 3,
-    dy_dt: 0,
-    dx_dt: 4,
-    radius: 40,
-    center: [cnv.width / 2, cnv.height / 2],
-    dir: 1,
-    lineWidth: 10, 
-    strokeColor: COLOR.red,
-    fillColor: COLOR.red,
-  };
+    const updatePolygon = returnStateAggregator<PolygonState>(poly0, (s) => {
+      clearCanvas(ctx, cnv);
+      drawNGon(ctx, s.center, s.radius, s.sides, s.lineWidth, COLOR.red, COLOR.blue);
+    });
 
-  const updatePolygonPhysics = attachState<PolygonState>((s) => {
-    clearCanvas(ctx, cnv);
-    drawNGon(
-      ctx,
-      s.center,
-      40, s.sides, 1, s.fillColor, s.fillColor,
-    );
-  }, polygon);
+    const applyGravity = (s: PolygonState): PolygonState => {
+      const dt = 1;
+      const g = 2;
+      s.dy_dt += g * dt;
+      s.center[1] += s.dy_dt * dt;
+      return s;
+    };
 
-  const ddy_dtt = 3; // gravity
-  const dt = 1 // make the math make sense
+    const enforceFloor = (s: PolygonState): PolygonState => {
+      let [_,y] = s.center;
+      if (y + s.radius > cnv.height) {
+        y = cnv.height - s.radius;
+        s.dy_dt *= -0.8; // energy loss
+      }
+      return {...s, center: [s.center[0], y], dy_dt: s.dy_dt};
+    };
+
+    const morphSides = (s: PolygonState): PolygonState =>  {
+      if (s.frameCount % 5 === 0) s.sides++;
+      return {...s, sides: s.sides};
+    }
+
+    const countFrames = (s: PolygonState): PolygonState => {
+      return {...s, frameCount: s.frameCount + 1};
+    }
+
+    const logState = (s: PolygonState): PolygonState => {
+      console.log(s);
+      return s;
+    }
+ 
+    updatePolygon
+      .attach(s => countFrames(s))
+      .attach(s => applyGravity(s))
+      .attach(s => enforceFloor(s))
+      .attach(s => morphSides(s))
 
   function animationLoop(timestamp: number) {
     const timeSinceLastFrame = timestamp - lastFrameTime;
     const targetFrameTime = 1000 / target;
-
     // Only update if enough time has passed for the next frame
     if (timeSinceLastFrame >= targetFrameTime) {
       lastFrameTime = timestamp;
+      frameCount++;
 
-      updatePolygonPhysics((s) => {
-        let [x, y]: [number, number] = s.center;
-
-        // changing number of sides logic
-        if (s.sides >= 32) s.dir = -1;
-        if (s.sides <= 3)  s.dir =  1;
-        s.sides += s.dir;
-
-        // apply gravity and change velocity direction if colliding.
-        if ((y + s.radius) + 0.4 * ((s.dy_dt + ddy_dtt * dt) * dt) > cnv.height) {
-          console.log("COLLISION.");
-          s.fillColor = COLOR.blue;
-          y = cnv.height - s.radius; // anti tunnelling measure!
-          s.dy_dt = -0.99 * s.dy_dt; // dampening
-          y += s.dy_dt * dt;
-        } else {
-          s.fillColor = COLOR.red;
-          s.dy_dt += ddy_dtt * dt;
-          y += s.dy_dt * dt;
-        }
-
-        if ((x + s.radius) > cnv.width || (x - s.radius) < 0) {
-          s.dx_dt *= -1;
-        }
-        x += s.dx_dt * dt;
-
-        // update position
-        s.center = [x, y]
-
-        return s;
-      });
+      updatePolygon.run();
 
       requestAnimationFrame(animationLoop); 
     } else {
