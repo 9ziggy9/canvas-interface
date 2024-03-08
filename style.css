@@ -1,0 +1,45 @@
+:root {
+    --my-black:      #2e3440; --my-blue:         #81a1c1;
+    --my-light-blue: #88c0d0; --my-cyan:         #8fbcbb;
+    --my-green:      #a3be8c; --my-dark-gray:    #4c566a;
+    --my-light-gray: #d8dee9; --my-lighter-gray: #eceff4;
+    --my-white:      #e5e9f0; --my-light-white:  #f8f8f2;
+    --my-red:        #bf616a; --my-magenta:      #b48ead;
+    --my-violet:     #8fbcbb; --my-orange:       #ebcb8b;
+    --my-yellow:     #ebcb8b; --my-modal:        #4c566a88;
+}
+
+* {
+    user-select: none; /* This will disable text selection on the entire page */
+    -webkit-user-select: none; /* For Safari and Chrome */
+    -moz-user-select: none; /* For Firefox */
+    -ms-user-select: none; /* For IE10+/Edge */
+}
+
+::selection {
+    background-color: var(--my-black);
+    color: var(--my-yellow);
+}
+
+body,html {
+    font-family:  "EB Garamond", serif;
+    width:100%;
+    height:100%;
+    position:fixed;
+    margin: 0;
+    padding: 0;
+    background-color: var(--my-cyan);
+    color: var(--my-white);
+    caret-color: transparent;
+    display: flex;
+    justify-content: center;
+}
+
+.canvas-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+canvas { border: 2px solid var(--my-black); }
