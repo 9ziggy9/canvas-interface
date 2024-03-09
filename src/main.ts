@@ -111,7 +111,9 @@ function animateAtTargetFPS(
 ) {
     let lastFrameTime = 0; 
 
-    // things we wish to evolve in time
+    const g = 2;
+    const dt = 1;
+
     interface PolygonState {
       position: [number, number];
       radius: number;
@@ -122,9 +124,6 @@ function animateAtTargetFPS(
       sides: number;
       morph: number;
     };
-
-    const g = 2;
-    const dt = 1;
 
     const updatePosition = (s: PolygonState): PolygonState => ({
       ...s, position: [s.position[0] + s.dx_dt, s.position[1] + s.dy_dt * dt]
@@ -155,13 +154,14 @@ function animateAtTargetFPS(
 
     const updateSides = (s: PolygonState): PolygonState => ({
       ...s,
-      sides: s.sides + ((s.frameCount % 3 === 0) ? s.morph : 0),
+      sides: s.sides + ((s.frameCount % 2 === 0) ? s.morph : 0),
     });
 
-    const reverseMorph = (s: PolygonState): PolygonState => ({
-      ...s,
-      morph: s.morph * ((s.sides >= 10 || s.sides <= 3) ? -1 : 1),
-    });
+    const reverseMorph = (s: PolygonState): PolygonState => (s.sides >= 10)
+      ? {...s, morph: -1}
+      : (s.sides <= 3)
+        ? {...s, morph: 1}
+        : s
 
     const polygon00: PolygonState = {
       position: [cnv.width/2, cnv.height/2],
@@ -169,7 +169,7 @@ function animateAtTargetFPS(
       dy_dt: 0, // start from rest
       dx_dt: 5,
       decay: 1,
-      frameCount: 0,
+      frameCount: 1,
       sides: 3,
       morph: 1,
     };
@@ -182,8 +182,8 @@ function animateAtTargetFPS(
       .attach(s => updatePosition(s))
       .attach(s => applyFloor(s))
       .attach(s => applyWalls(s))
-      .attach(s => updateSides(s))
-      .attach(s => reverseMorph(s));
+      .attach(s => reverseMorph(s))
+      .attach(s => updateSides(s));
 
     const polygon10: PolygonState = {
       position: [cnv.width/4, cnv.height/4],
@@ -191,7 +191,7 @@ function animateAtTargetFPS(
       dy_dt: 0, // start from rest
       dx_dt: -2,
       decay: 1,
-      frameCount: 0,
+      frameCount: 1,
       sides: 3,
       morph: 1,
     };
@@ -204,21 +204,21 @@ function animateAtTargetFPS(
       .attach(s => updatePosition(s))
       .attach(s => applyFloor(s))
       .attach(s => applyWalls(s))
-      .attach(s => updateSides(s))
-      .attach(s => reverseMorph(s));
-
+      .attach(s => reverseMorph(s))
+      .attach(s => updateSides(s));
 
     function animationLoop(timestamp: number) {
       const timeSinceLastFrame = timestamp - lastFrameTime;
       const targetFrameTime = 1000 / target;
-      // Only update if enough time has passed for the next frame
+
+      // only update if enough time has passed for the next frame
       if (timeSinceLastFrame >= targetFrameTime) {
         lastFrameTime = timestamp;
 
         // BEGIN: animations
         clearCanvas(ctx, cnv);
-        polygon0.run();
-        polygon1.run();
+        polygon0.run()
+        polygon1.run()
         // END: animations
 
         requestAnimationFrame(animationLoop); 
@@ -226,7 +226,7 @@ function animateAtTargetFPS(
         requestAnimationFrame(animationLoop); // skip and wait
       }
     }
-    requestAnimationFrame(animationLoop);
+    requestAnimationFrame(animationLoop); // enter recursive loop
 }
 
 function main(): void {
