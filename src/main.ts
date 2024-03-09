@@ -123,6 +123,8 @@ function animateAtTargetFPS(
       frameCount: number;
       sides: number;
       morph: number;
+      fillColor: string;
+      borderColor: string;
     };
 
     const updatePosition = (s: PolygonState): PolygonState => ({
@@ -163,6 +165,12 @@ function animateAtTargetFPS(
         ? {...s, morph: 1}
         : s
 
+    const changeColor = (s: PolygonState): PolygonState => ({
+      ...s,
+      fillColor:   (s.frameCount % 5 === 0) ? s.borderColor : s.fillColor,
+      borderColor: (s.frameCount % 5 === 0) ? s.fillColor   : s.borderColor,
+    });
+
     const polygon00: PolygonState = {
       position: [cnv.width/2, cnv.height/2],
       radius: 40,
@@ -172,9 +180,11 @@ function animateAtTargetFPS(
       frameCount: 1,
       sides: 3,
       morph: 1,
+      fillColor: COLOR.red,
+      borderColor: COLOR.blue,
     };
     const polygon0 = returnStateAggregator(polygon00, (s) => {
-      drawNGon(ctx, s.position, s.radius, s.sides, 4, COLOR.red, COLOR.blue);
+      drawNGon(ctx, s.position, s.radius, s.sides, 4, s.fillColor, s.borderColor);
     });
     polygon0
       .attach(s => updateFrames(s))
@@ -183,7 +193,8 @@ function animateAtTargetFPS(
       .attach(s => applyFloor(s))
       .attach(s => applyWalls(s))
       .attach(s => reverseMorph(s))
-      .attach(s => updateSides(s));
+      .attach(s => updateSides(s))
+      .attach(s => changeColor(s));
 
     const polygon10: PolygonState = {
       position: [cnv.width/4, cnv.height/4],
@@ -194,9 +205,11 @@ function animateAtTargetFPS(
       frameCount: 1,
       sides: 3,
       morph: 1,
+      fillColor: COLOR.blue,
+      borderColor: COLOR.red,
     };
     const polygon1 = returnStateAggregator(polygon10, (s) => {
-      drawNGon(ctx, s.position, s.radius, s.sides, 4, COLOR.blue, COLOR.red);
+      drawNGon(ctx, s.position, s.radius, s.sides, 4, s.fillColor, s.borderColor);
     });
     polygon1
       .attach(s => updateFrames(s))
@@ -205,7 +218,8 @@ function animateAtTargetFPS(
       .attach(s => applyFloor(s))
       .attach(s => applyWalls(s))
       .attach(s => reverseMorph(s))
-      .attach(s => updateSides(s));
+      .attach(s => updateSides(s))
+      .attach(s => changeColor(s));
 
     function animationLoop(timestamp: number) {
       const timeSinceLastFrame = timestamp - lastFrameTime;
