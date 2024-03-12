@@ -1,0 +1,7 @@
+* canvas physics engine
+Experiments in using a semi-monadic architecture for binding stateful behavior to renderable objects in canvas.
+
+** Examples
+[[file:./gifs/example1.gif][polygon morphing]]
+[[file:./gifs/example2.gif][spring force]]
+[[file:./gifs/example3.gif][many dumbells]]
