@@ -8,7 +8,8 @@ import {
   Forces,
   Kinematic,
   Bounded,
-} from "./examples.js";
+  Field,
+} from "./examples1.js";
 
 function initCanvas
 (id: string): [CanvasRenderingContext2D, HTMLCanvasElement] | never
@@ -33,6 +34,25 @@ function clearCanvas
   );
 }
 
+function main(): void {
+  const [ctx, cnv] = initCanvas("main-canvas");
+
+  const circles: State.Ensemble<Circle.State> = {
+    "c0": {...Circle.defaults, position: [0,1]},
+    "c1": {...Circle.defaults, position: [1,0]},
+  };
+
+  const cField = Field.from(circles);
+  console.log(cField);
+
+  Loop.animateAtTargetFPS(60, ctx, cnv, () => {
+    clearCanvas(ctx, cnv);
+  });
+}
+
+window.onload = main;
+
+// Further examples
 function main_mesh_ex(): void {
   const [ctx, cnv] = initCanvas("main-canvas");
 
@@ -65,7 +85,11 @@ function main_mesh_ex(): void {
     }), {});
   const meshStates = State.unit(mesh, (circles) => {
     Circle.pairs(circles).forEach(([cName0, cName1]) => {
-      Primitives.drawConnection(ctx, [circles[cName0],circles[cName1]]);
+      Primitives.drawConnection(
+        ctx,
+        [circles[cName0], circles[cName1]],
+        Color.blue,
+      );
     });
     for (const c of Object.values(circles)) {
       const [x,y] = c.position;
@@ -74,8 +98,6 @@ function main_mesh_ex(): void {
       );
     };
   });
-  meshStates
-    .attach(m => Circle.meshUpdate(m));
 
   Loop.animateAtTargetFPS(
     60, ctx, cnv,
@@ -86,11 +108,6 @@ function main_mesh_ex(): void {
   );
 }
 
-
-window.onload = main_mesh_ex;
-
-
-// Further examples
 function main_spring_ex(): void {
   const [ctx, cnv] = initCanvas("main-canvas");
 

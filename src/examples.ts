@@ -1,4 +1,5 @@
 import { State as StateMonad } from "./state.js";
+import { Color } from "./color.js";
 
 type Base = StateMonad.State;
 type Ensemble<S extends Base> = StateMonad.Ensemble<S>;
@@ -79,6 +80,74 @@ export namespace Forces {
   }
 };
 
+export namespace Field {
+  export type State<T> = {
+    [coord: string]: T;
+  };
+
+  export const from =
+  <E extends Ensemble<Kinematic.State>> (e: E): State<[number,number]> =>
+    Object.entries(e)
+      .reduce((field, [_, { position: [x,y], dx_dt, dy_dt }]) => ({
+        ...field,
+        [`${x},${y}`]: [dx_dt, dy_dt]
+      }), {});
+
+  export function unit (
+    // ctx: CanvasRenderingContext2D
+    boundX: [number, number],
+    boundY: [number, number],
+    cols: number, // x
+    rows: number, // y
+    // f: (v: number => number),
+  ): State<[number, number]> {
+    const [bX0, bX1] = boundX;
+    const [bY0, bY1] = boundY;
+    const unitX = (bX1 - bX0) / cols;
+    const unitY = (bY1 - bY0) / rows;
+
+    type Region = {[coord: string]: [number, number]}
+    const region: Region = [...Array(cols)]
+      .map((_) => Array(rows).fill([1,1]))
+      .reduce((points, col, x) => ({
+        ...points,
+        ...col.reduce(
+          (innerPoints: Region, v: [number, number], y: number) =>
+            ({...innerPoints, [`${x*unitX},${y*unitY}`]: v}), {})
+      }), {});
+
+    return region;
+  }
+  export function drawUnitField
+  (ctx: CanvasRenderingContext2D,
+   cnv: HTMLCanvasElement, f: State<[number, number]>): void
+  {
+    Object.entries(f)
+      .forEach(([coord, [ux,uy]]) => {
+        const [x,y] = coord.split(',').map(s => Number(s));
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo((x + 4*ux), (y + 4*uy));
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = Color.blue;
+        ctx.stroke();
+      })
+  }
+}
+
+export namespace Charged {
+  export interface State extends Kinematic.State {
+    charge: number;
+  }
+  export function coulombField<E extends Ensemble<State>>
+  (ensemble: E): Field.State<{charge: State["charge"]}>
+  {
+    return {
+      "0,1": {charge:0},
+    }
+  }
+}
+
 export namespace Bounded {
   export interface State extends Kinematic.State {
     radius:           number;
@@ -117,6 +186,8 @@ export namespace Circle {
   export interface State
   extends Drawable.State, Forces.State, Bounded.State {};
   export const defaults = {
+    fillColor:    Color.red,
+    borderColor:  Color.blue,
     borderWidth:  4,
     dx_dt:        0,
     dy_dt:        0,
@@ -139,49 +210,6 @@ export namespace Circle {
     Object.keys(s)
       .flatMap((n, i, ns) => ns.slice(i + 1)
       .flatMap(m => [[n,m], [m,n]]));
-
-  export const coulombInteraction = <E extends Ensemble<State>>(s: E): E =>
-    Circle.pairs(s)
-      .reduce<E>((ensemble, [cName1, cName2]) => {
-        const dt       = s[cName1].dt;
-        const [x1, y1] = s[cName1].position;
-        const [x2, y2] = s[cName2].position;
-        const dy1_dt   = s[cName1].dy_dt;
-        const dx1_dt   = s[cName1].dx_dt;
-        const dy2_dt   = s[cName2].dy_dt;
-        const dx2_dt   = s[cName2].dx_dt;
-        return {
-          ...ensemble,
-          [cName1]: {
-            ...s[cName1],
-            dy_dt: dy1_dt + dt * ((y2 - y1) / Math.pow((y2 - y1), 3)),
-            dx_dt: dx1_dt + dt * ((x2 - x1) / Math.pow((x2 - x1), 3)),
-          },
-          [cName2]: {
-            ...s[cName2],
-            dy_dt: dy2_dt + dt * ((y2 - y1) / Math.pow((y2 - y1), 3)),
-            dx_dt: dx2_dt + dt * ((x2 - x1) / Math.pow((x2 - x1), 3)),
-          },
-        };
-      }, {} as E);
-
-  export const meshUpdate = <E extends Ensemble<State>> (e: E): E =>
-    Circle.pairs(e)
-      .reduce<E>((ensemble, [cName1, cName2]) => {
-        const [x1, y1] = e[cName1].position;
-        const [x2, y2] = e[cName2].position;
-        return {
-          ...ensemble,
-          [cName1]: {
-            ...e[cName1],
-            position: [x1 + 1, y1 + 1],
-          },
-          [cName2]: {
-            ...e[cName2],
-            position: [x2 - 1, y2 - 1],
-          },
-        }
-      }, {} as E);
 }
 
 export namespace Polygon {
