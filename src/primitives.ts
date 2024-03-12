@@ -1,3 +1,6 @@
+import { Circle } from "./examples.js";
+import { Color } from "./color.js";
+
 export namespace Primitives {
 
   export type Scale = 0.1 | 0.2 | 0.3 | 0.4 | 0.5 | 0.6 | 0.7 | 0.8 | 0.9 | 1; // lol
@@ -69,4 +72,28 @@ export namespace Primitives {
       ctx.stroke();
   }
 
+  export function drawSpringPair
+  (ctx: CanvasRenderingContext2D, cs: Circle.State[]): void
+  {
+    const dy = (cs[1].position[1] - cs[0].position[1]);
+    const [x1,y1] = cs[0].position;
+    const [x2,y2] = cs[1].position;
+    const r = cs[1].radius;
+    // Draw Spring
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.lineWidth = r / ((dy / (r ** 2)) + 1);
+    ctx.strokeStyle = Color.darkGray;
+    ctx.stroke();
+    // Draw circles
+    Primitives.drawCircle(
+      ctx, [x1, y1], r,
+      cs[0].fillColor, cs[0].borderColor, cs[0].borderWidth,
+    );
+    Primitives.drawCircle(
+      ctx, [x2, y2], r,
+      cs[1].fillColor, cs[1].borderColor, cs[1].borderWidth,
+    );
+  }
 }

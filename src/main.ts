@@ -33,31 +33,6 @@ function clearCanvas
   );
 }
 
-function renderCirclePair
-(ctx: CanvasRenderingContext2D, cs: Circle.State[]): void
-{
-  const dy = (cs[1].position[1] - cs[0].position[1]);
-  const [x1,y1] = cs[0].position;
-  const [x2,y2] = cs[1].position;
-  const r = cs[1].radius;
-  // Draw Spring
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.lineWidth = r / ((dy / (r ** 2)) + 1);
-  ctx.strokeStyle = Color.darkGray;
-  ctx.stroke();
-  // Draw circles
-  Primitives.drawCircle(
-    ctx, [x1, y1], r,
-    cs[0].fillColor, cs[0].borderColor, cs[0].borderWidth,
-  );
-  Primitives.drawCircle(
-    ctx, [x2, y2], r,
-    cs[1].fillColor, cs[1].borderColor, cs[1].borderWidth,
-  );
-}
-
 function main(): void {
   const [ctx, cnv] = initCanvas("main-canvas");
 
@@ -71,10 +46,14 @@ function main(): void {
   };
 
   const springPair = State.unit(({c0, c1}), (s) => {
-    renderCirclePair(ctx, [s.c0, s.c1])
+    Primitives.drawSpringPair(ctx, [s.c0, s.c1])
   });
 
   springPair
+    .attach(({c0, c1}) => ({
+      c0: Kinematic.updateFrames(c0),
+      c1: Kinematic.updateFrames(c1)
+    }))
     .attach(({c0, c1}) => ({
       c0: Kinematic.updatePosition(c0),
       c1: Kinematic.updatePosition(c1),
@@ -83,7 +62,11 @@ function main(): void {
       ...s,
       c1: Forces.verticalGravity(c1, 2)
     }))
-    .attach((s) => Forces.hookeSpring(s, 0.02, (50/4 + s.c1.radius)));
+    .attach((s) => Forces.hookeSpring(s, 0.02, (50/4 + s.c1.radius)))
+    .attach((s) => {
+      if (s.c0.frameCount === 120) console.log(s);
+      return s;
+    })
 
   Loop.animateAtTargetFPS(
     60, ctx, cnv,
