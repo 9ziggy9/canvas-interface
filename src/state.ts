@@ -1,3 +1,10 @@
+// TODO:
+// An implementation of "interactions" of ensembles must be done.
+// Even if done over permutations of substates, this could allow
+// for binding of operations in a uniform manner.
+// Consider removing tuple as possible Stateful var.
+// type State should probably be renamed to Substate.
+
 export namespace State {
   type StatefulVar = number | string | [number, number];
 

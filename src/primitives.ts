@@ -1,4 +1,4 @@
-import { Circle } from "./examples.js";
+import { Circle } from "./examples-old.js";
 import { Color } from "./color.js";
 
 export namespace Primitives {
