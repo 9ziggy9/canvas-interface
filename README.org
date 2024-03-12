@@ -1,6 +1,5 @@
 * canvas physics engine
 Experiments in using a semi-monadic architecture for binding stateful behavior to renderable objects in canvas.
-
 ** Examples
 #+HTML: <img src="./demo_vids/dumbells.gif" alt="Dumbells" />
 #+HTML: <img src="./demo_vids/spring.gif" alt="Polygon" />

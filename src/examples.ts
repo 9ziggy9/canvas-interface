@@ -128,6 +128,60 @@ export namespace Circle {
     xDissipation: 1,
   };
 
+  // Pairs: [1,2] is equivalent to [2,1]
+  export const pairs = <E extends Ensemble<State>>(s: E): string[][] =>
+    Object.keys(s)
+      .flatMap((n, i, ns) => ns.slice(i + 1)
+      .flatMap(m => [[n,m]]));
+
+  // Permutations: [1,2] is distinct from [2,1]
+  export const perms = <E extends Ensemble<State>>(s: E): string[][] =>
+    Object.keys(s)
+      .flatMap((n, i, ns) => ns.slice(i + 1)
+      .flatMap(m => [[n,m], [m,n]]));
+
+  export const coulombInteraction = <E extends Ensemble<State>>(s: E): E =>
+    Circle.pairs(s)
+      .reduce<E>((ensemble, [cName1, cName2]) => {
+        const dt       = s[cName1].dt;
+        const [x1, y1] = s[cName1].position;
+        const [x2, y2] = s[cName2].position;
+        const dy1_dt   = s[cName1].dy_dt;
+        const dx1_dt   = s[cName1].dx_dt;
+        const dy2_dt   = s[cName2].dy_dt;
+        const dx2_dt   = s[cName2].dx_dt;
+        return {
+          ...ensemble,
+          [cName1]: {
+            ...s[cName1],
+            dy_dt: dy1_dt + dt * ((y2 - y1) / Math.pow((y2 - y1), 3)),
+            dx_dt: dx1_dt + dt * ((x2 - x1) / Math.pow((x2 - x1), 3)),
+          },
+          [cName2]: {
+            ...s[cName2],
+            dy_dt: dy2_dt + dt * ((y2 - y1) / Math.pow((y2 - y1), 3)),
+            dx_dt: dx2_dt + dt * ((x2 - x1) / Math.pow((x2 - x1), 3)),
+          },
+        };
+      }, {} as E);
+
+  export const meshUpdate = <E extends Ensemble<State>> (e: E): E =>
+    Circle.pairs(e)
+      .reduce<E>((ensemble, [cName1, cName2]) => {
+        const [x1, y1] = e[cName1].position;
+        const [x2, y2] = e[cName2].position;
+        return {
+          ...ensemble,
+          [cName1]: {
+            ...e[cName1],
+            position: [x1 + 1, y1 + 1],
+          },
+          [cName2]: {
+            ...e[cName2],
+            position: [x2 - 1, y2 - 1],
+          },
+        }
+      }, {} as E);
 }
 
 export namespace Polygon {

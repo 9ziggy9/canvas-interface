@@ -96,4 +96,21 @@ export namespace Primitives {
       cs[1].fillColor, cs[1].borderColor, cs[1].borderWidth,
     );
   }
+
+  export function drawConnection
+  (ctx: CanvasRenderingContext2D, cs: Circle.State[]): void
+  {
+    const [x1,y1] = cs[0].position;
+    const [x2,y2] = cs[1].position;
+    const dxdx = (x2 - x1)*(x2 - x1);
+    const dydy = (y2 - y1)*(y2 - y1);
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.lineWidth = 0.1;
+    ctx.strokeStyle = Color.darkGray;
+    ctx.stroke();
+
+  }
 }
