@@ -41,7 +41,7 @@ function renderCirclePair
   ctx.beginPath();
   ctx.moveTo(cs[0].position[0], cs[0].position[1]);
   ctx.lineTo(cs[1].position[0], cs[1].position[1]);
-  ctx.lineWidth = dy / cs[1].radius;
+  ctx.lineWidth = (cs[1].radius / (dy/(cs[1].radius)**2+1));
   ctx.strokeStyle = Color.darkGray;
   ctx.stroke();
 
@@ -65,13 +65,13 @@ function main(): void {
       fillColor: Color.red, borderColor: Color.blue, borderWidth: 4,
     },
     {
-      ...Circle.defaults, position: [cnv.width/2, 271], radius: 10,
+      ...Circle.defaults, position: [cnv.width/2, 171], radius: 10,
       fillColor: Color.blue, borderColor: Color.red, borderWidth: 4,
-      dy_dt: 0.02,
     },
   ], (s) => {renderCirclePair(ctx, [s[0], s[1]])})
     .attach(cs => cs.map(c => Kinematic.updatePosition(c)))
-    .attach(cs => Forces.hookeSpring(cs[0], cs[1], 0.009, (150/2 + cs[1].radius)));
+    .attach(cs => cs.map((c, i) => i === 0 ? c : Forces.verticalGravity(c, 2)))
+    .attach(cs => Forces.hookeSpring(cs[0], cs[1], 0.02, (50/4 + cs[1].radius)));
 
   Loop.animateAtTargetFPS(
     60, ctx, cnv,
