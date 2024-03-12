@@ -1,18 +1,62 @@
-export namespace State {
-  export type StateMap<T> = (state: T) => T;
+// export namespace State {
+//   type StatefulVar = any;
 
-  export interface StateAggregator<T> {
-    attach: (m: StateMap<T>) => StateAggregator<T>;
+//   export type State = Record<string, StatefulVar> & {
+//     [attribute: string]: unknown;
+//   };
+
+//   export type Ensemble<S extends State> = {
+//     [substateName: string]: S;
+//   }
+
+//   export type StateMap<S extends State> = (s: S) => S;
+
+//   export interface StateAggregator<S extends State> {
+//     attach: (m: StateMap<S>) => StateAggregator<S>;
+//     run: () => void;
+//   };
+
+//   export function unit<S extends State>
+//   (initialState: S, fn: (s: S) => void) : StateAggregator<S>
+//   {
+//     let state: S = initialState;
+//     let stateMaps: StateMap<S>[] = [];
+//     return {
+//       attach(m: StateMap<S>) {
+//         stateMaps.push(m);
+//         return this;
+//       },
+//       run: () => {
+//         state = stateMaps.reduce((cState, m) => m(cState), state);
+//         fn(state);
+//       },
+//     }
+//   };
+// }
+export namespace State {
+  type StatefulVar = number | string | [number, number];
+
+  export type State = {
+    [attribute: string]: StatefulVar;
+  };
+
+  export type Ensemble<S extends State> = {
+    [substateName: string]: S;
+  };
+  
+  export type StateMap<S extends State | Ensemble<State>> = (state: S) => S;
+
+  export interface StateAggregator<S extends State | Ensemble<State>> {
+    attach: (m: StateMap<S>) => StateAggregator<S>;
     run: () => void;
   };
 
-  export function unit<T>
-  (initialState: T, fn: (s: T) => void) : StateAggregator<T>
-  {
-    let state: T = initialState;
-    let stateMaps: StateMap<T>[] = [];
+  export function unit<S extends State | Ensemble<State>>
+  (initialState: S, fn: (s: S) => void) : StateAggregator<S> {
+    let state: S = initialState;
+    let stateMaps: StateMap<S>[] = [];
     return {
-      attach(m: StateMap<T>) {
+      attach(m: StateMap<S>) {
         stateMaps.push(m);
         return this;
       },
@@ -20,6 +64,6 @@ export namespace State {
         state = stateMaps.reduce((cState, m) => m(cState), state);
         fn(state);
       },
-    }
+    };
   };
 }

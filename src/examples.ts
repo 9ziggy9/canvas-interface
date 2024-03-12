@@ -1,5 +1,10 @@
+import { State as StateMonad } from "./state.js";
+
+type Base = StateMonad.State;
+type Ensemble<S extends Base> = StateMonad.Ensemble<S>;
+
 export namespace Drawable {
-  export interface State {
+  export interface State extends Base {
     fillColor:   string;
     borderColor: string;
     borderWidth: number;
@@ -7,7 +12,7 @@ export namespace Drawable {
 };
 
 export namespace Kinematic {
-  export interface State {
+  export interface State extends Base {
     position: [number, number];
     dy_dt: number;
     dx_dt: number;
@@ -58,16 +63,19 @@ export namespace Forces {
     ]
   }
 
-  export function hookeSpring<S extends State>
-  (c0: S, c1: S, k: number, rest: number): S[]
+  export function hookeSpring<E extends Ensemble<State>>
+  (s: E, k: number, rest: number): E
   {
-    const [x1, y1] = c0.position;
-    const [x2, y2] = c1.position;
-    const F = (-1) * k * ((y2 - y1) - rest);
-    return [
-      {...c0},
-      {...c1, dy_dt: c1.dy_dt + (F * (c0.dt))}
-    ]
+    const [[p1, state1], [p2, state2]] = Object.entries(s);
+    const [x1, y1] = state1.position;
+    const [x2, y2] = state2.position;
+    return {
+      [p1]: {...state1},
+      [p2]: {
+        ...state2,
+        dy_dt: state2.dy_dt + (-1) * ((y2 - y1) - rest) * k,
+      }
+    } as E;
   }
 };
 

@@ -6,7 +6,7 @@
   "compilerOptions": {
     "target": "es6",                    
     "module": "es6",                
-    "lib": ["DOM", "ES6"],
+    "lib": ["DOM", "es2017"],
     "rootDir": "./src",                   
     "outDir": "./build",                               
     "esModuleInterop": true,
