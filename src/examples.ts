@@ -50,13 +50,19 @@ export namespace Bounded {
 
   export const applyWalls =
     <S extends State>(s: S, cnv: HTMLCanvasElement): S =>
-      ({
-      ...s,
-      dx_dt: s.dx_dt
-        * s.xDissipation
-        * ((s.position[0] + s.radius > cnv.width
-          || s.position[0] - s.radius < 0) ? (-1) : 1)
-      });
+    (s.position[0] + s.radius >= cnv.width)
+      ? {
+          ...s,
+          dx_dt: s.dx_dt * s.xDissipation * (-1),
+          position: [cnv.width - s.radius, s.position[1]],
+        }
+      : ((s.position[0] - s.radius) <= 0)
+        ? {
+              ...s,
+              dx_dt: s.dx_dt * s.xDissipation * (-1),
+              position: [s.radius, s.position[1]],
+          }
+        : s;
 }
 
 export namespace Circle {
@@ -73,6 +79,35 @@ export namespace Circle {
     yDissipation: 1,
     xDissipation: 1,
   };
+
+  export function fixedDistanceConstraint
+  (c0: State, c1: State, r: number): State[]
+  {
+    // https://en.wikipedia.org/wiki/Verlet_integration#Constraints
+    // This implementation effectively applies a string of infinite stiffness
+    const [x1, y1] = c0.position;
+    const [x2, y2] = c1.position;
+    const dx_sqrd = (x2 - x1) * (x2 - x1);
+    const dy_sqrd = (y2 - y1) * (y2 - y1);
+    const d = Math.sqrt(dx_sqrd + dy_sqrd);
+    const R = (d - r) / d;
+    return [
+      {
+        ...c0,
+        position: [
+          x1 + ((x2 - x1) * R) / 2,
+          y1 + ((y2 - y1) * R) / 2
+        ]
+      },
+      {
+        ...c1,
+        position: [
+          x2 - ((x2 - x1) * R) / 2,
+          y2 - ((y2 - y1) * R) / 2
+        ]
+      }
+    ]
+  }
 }
 
 export namespace Polygon {
