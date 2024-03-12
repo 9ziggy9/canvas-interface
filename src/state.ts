@@ -12,7 +12,7 @@ export namespace State {
       InteractiveStateAggregator<T>;
   }
 
-  export function returnStateAggregator<T>
+  export function unit<T>
   (initialState: T, fn: (s: T) => void) : StateAggregator<T>
   {
     let state: T = initialState;
@@ -35,7 +35,7 @@ export namespace State {
     let states: T[] = initialStates;
     let stateMaps: StateMap<T[]>[] = [];
     return {
-      ...returnStateAggregator(states, fn),
+      ...unit(states, fn),
       attachInteraction(m: InteractiveStateMap<T>) {
         stateMaps.push(m);
         return this;
