@@ -3,3 +3,5 @@ Experiments in using a semi-monadic architecture for binding stateful behavior t
 
 ** Examples
 #+HTML: <img src="./demo_vids/dumbells.gif" alt="Dumbells" />
+#+HTML: <img src="./demo_vids/spring.gif" alt="Polygon" />
+#+HTML: <img src="./demo_vids/polygon.gif" alt="Spring" />

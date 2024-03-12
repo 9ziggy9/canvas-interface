@@ -33,7 +33,7 @@ function clearCanvas
   );
 }
 
-window.onload = main_dumbells_ex;
+window.onload = main_polygon_ex;
 
 
 // Further examples
