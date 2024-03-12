@@ -22,13 +22,53 @@ export namespace Kinematic {
   });
 };
 
-export namespace Gravitational {
-  export interface State extends Kinematic.State {
-    g:    number;
-  };
-  export const vertical = <S extends State> (s: S): S => ({
-    ...s, dy_dt: s.dy_dt + s.g * s.dt
+export namespace Forces {
+  export interface State extends Kinematic.State {};
+
+  export const verticalGravity = <S extends State> (s: S, g: number): S => ({
+    ...s, dy_dt: s.dy_dt + g * s.dt
   });
+
+  export function fixedDistanceConstraint<S extends State>
+  (c0: S, c1: S, r: number): S[]
+  {
+    // https://en.wikipedia.org/wiki/Verlet_integration#Constraints
+    // This implementation effectively applies a string of infinite stiffness
+    const [x1, y1] = c0.position;
+    const [x2, y2] = c1.position;
+    const dx_sqrd = (x2 - x1) * (x2 - x1);
+    const dy_sqrd = (y2 - y1) * (y2 - y1);
+    const d = Math.sqrt(dx_sqrd + dy_sqrd);
+    const R = (d - r) / d;
+    return [
+      {
+        ...c0,
+        position: [
+          x1 + ((x2 - x1) * R) / 2,
+          y1 + ((y2 - y1) * R) / 2
+        ]
+      },
+      {
+        ...c1,
+        position: [
+          x2 - ((x2 - x1) * R) / 2,
+          y2 - ((y2 - y1) * R) / 2
+        ]
+      }
+    ]
+  }
+
+  export function hookeSpring<S extends State>
+  (c0: S, c1: S, k: number, rest: number): S[]
+  {
+    const [x1, y1] = c0.position;
+    const [x2, y2] = c1.position;
+    const F = (-1) * k * ((y2 - y1) - rest);
+    return [
+      {...c0},
+      {...c1, dy_dt: c1.dy_dt + (F * (c0.dt))}
+    ]
+  }
 };
 
 export namespace Bounded {
@@ -67,7 +107,7 @@ export namespace Bounded {
 
 export namespace Circle {
   export interface State
-  extends Drawable.State, Gravitational.State, Bounded.State {};
+  extends Drawable.State, Forces.State, Bounded.State {};
   export const defaults = {
     borderWidth:  4,
     dx_dt:        0,
@@ -80,39 +120,11 @@ export namespace Circle {
     xDissipation: 1,
   };
 
-  export function fixedDistanceConstraint
-  (c0: State, c1: State, r: number): State[]
-  {
-    // https://en.wikipedia.org/wiki/Verlet_integration#Constraints
-    // This implementation effectively applies a string of infinite stiffness
-    const [x1, y1] = c0.position;
-    const [x2, y2] = c1.position;
-    const dx_sqrd = (x2 - x1) * (x2 - x1);
-    const dy_sqrd = (y2 - y1) * (y2 - y1);
-    const d = Math.sqrt(dx_sqrd + dy_sqrd);
-    const R = (d - r) / d;
-    return [
-      {
-        ...c0,
-        position: [
-          x1 + ((x2 - x1) * R) / 2,
-          y1 + ((y2 - y1) * R) / 2
-        ]
-      },
-      {
-        ...c1,
-        position: [
-          x2 - ((x2 - x1) * R) / 2,
-          y2 - ((y2 - y1) * R) / 2
-        ]
-      }
-    ]
-  }
 }
 
 export namespace Polygon {
   export interface State
-  extends Drawable.State, Gravitational.State, Bounded.State
+  extends Drawable.State, Forces.State, Bounded.State
   {
     sides:       number;
     morph:       number;
