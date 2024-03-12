@@ -4,4 +4,4 @@ Experiments in using a semi-monadic architecture for binding stateful behavior t
 ** Examples
 [[file:./gifs/example1.gif][polygon morphing]]
 [[file:./gifs/example2.gif][spring force]]
-[[file:./gifs/example3.webn][many dumbells]]
+[[file:./gifs/example3.webm][many dumbells]
