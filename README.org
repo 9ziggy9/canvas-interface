@@ -2,6 +2,4 @@
 Experiments in using a semi-monadic architecture for binding stateful behavior to renderable objects in canvas.
 
 ** Examples
-[[file:./gifs/example1.gif][polygon morphing]]
-[[file:./gifs/example2.gif][spring force]]
-[[file:./demo_vids/example1.mp4]]
+#+HTML: <img src="./demo_vids/dumbells.gif" alt="Dumbells" />
