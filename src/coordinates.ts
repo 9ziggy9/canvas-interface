@@ -68,17 +68,19 @@ export namespace Iso {
   }
 
   function computeExtrema
-  (width: number, height: number, size: number): [number, number, number]
+  (width: number, height: number, size: number): [number, number, number] | never
   {
-    const corner1: Vector = LA.invertBasis(
-      Basis.Isometric, {x: width/size, y: 0}
+    const isoBasisTransform: LA.Matrix2x2 = LA.matrixFromBasis(
+      Basis.Isometric
     );
-    const corner2: Vector = LA.invertBasis(
-      Basis.Isometric, {x: 0, y: height/size}
-    );
-    const corner3: Vector = LA.invertBasis(
-      Basis.Isometric, {x: width/size, y: height/size}
-    );
+
+    // Partial application, isn't that nice?
+    const invert = LA.applyMatrix (LA.adjugateInverse(isoBasisTransform));
+
+    const corner1: Vector = invert ({x: width/size, y: 0})
+    const corner2: Vector = invert ({x: 0, y: height/size})
+    const corner3: Vector = invert ({x: width/size, y: height/size})
+
     return [corner2.x, corner1.x, corner3.y];
   }
 

@@ -42,9 +42,7 @@ export namespace LinearAlgebra {
     };
   }
 
-  // This is hard coded! Because we are not guaranteed an orthogonal
-  // transformation, we will need to write a general matrix inversion
-  // algorithm. Gauss-Jordan elimination should be fine for 2-dimensions.
+  // DEPRECATED: use matrix transformations instead.
   export function invertBasis(b: Basis, v: Vector): Vector {
     return {
       x: v.x * 0.5 - v.y,
@@ -52,4 +50,27 @@ export namespace LinearAlgebra {
     };
   }
 
+  export type Matrix2x2 = [  number, number,
+                             number, number  ];
+
+  export const applyMatrix = (m: Matrix2x2) => (v: Vector): Vector => 
+    ({ x: m[0] * v.x + m[2] * v.y, y: m[1] * v.x + m[3] * v.y });
+
+  export const matrixFromBasis = (b: Basis): Matrix2x2 =>
+  [
+    Unit[b][0].x , Unit[b][0].y , // column 1
+    Unit[b][1].x , Unit[b][1].y , // column 2
+  ];
+
+  export function adjugateInverse(m: Matrix2x2): Matrix2x2 | never {
+    const [a, b, c, d] = m;
+  
+    const det = a * d - b * c;
+
+    if (det === 0)
+      throw Error("adjugateInverse(): NOT INVERTIBLE PANICK!");
+
+    const invDet = 1 / det;
+    return [d * invDet, -b * invDet, -c * invDet, a * invDet];
+  }
 }
