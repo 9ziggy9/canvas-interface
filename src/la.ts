@@ -1,11 +1,8 @@
 export namespace LinearAlgebra {
   // CONSTANTS: save on Math calls
   export const SQRT_3 = 1.7320508075688772;
-  export const ISO_INTERIOR_ANGLE = 2.0943951023931953 // 120 degrees (phi)
-  export const ISO_EXTERIOR_ANGLE = 0.5235987755982989 // 30 degrees (theta)
-                                                       // (pi - phi) / 2
-  export const ISO_TAN_EXTERIOR   = 1.732050807568877; // 1 / tan (theta)
   // END CONSTANTS
+
   export enum  Basis    { Standard, Isometric, FortyFive};
   export type  Vector = { x: number; y: number; }
 
@@ -14,10 +11,6 @@ export namespace LinearAlgebra {
       {x: 1, y: 0},
       {x: 0, y: 1}
     ],
-    // [Basis.Isometric]: [
-    //   {x:  (0.5) * SQRT_3, y: -(0.5) * SQRT_3},
-    //   {x:  0.5,            y: 0.5}
-    // ],
     [Basis.Isometric]: [
       {x:  1, y: -0.5},
       {x:  1, y:  0.5}
@@ -42,14 +35,6 @@ export namespace LinearAlgebra {
   export const determinant = (b: Basis): number =>
     Unit[b][0].x * Unit[b][1].y - Unit[b][0].y * Unit[b][1].x
 
-  // "Bear in mind that changeBasis() currently only "
-  // "makes sense for transformations between orthonormal bases. "
-  // "This is because we are computing the transpose of the "
-  // "transformation. Which for orthonormal bases, is the inverse "
-  // "P^T = P^-1, where v_new = P^-1 * v_old."
-  /* Transformation matrix:     Transformation transpose:
-      Unit[b][0].x Unit[b][0].y  Unit[b][0].x Unit[b][0].y
-      Unit[b][1].x Unit[b][1].y  Unit[b][1].x Unit[b][1].y */
   export function changeBasis(b: Basis, v: Vector): Vector {
     return {
       x: v.x * Unit[b][0].x + v.y * Unit[b][1].x,
@@ -57,10 +42,9 @@ export namespace LinearAlgebra {
     };
   }
 
-    // [Basis.Isometric]: [
-    //   {x:  1, y: -0.5},
-    //   {x:  1, y:  0.5}
-    // ],
+  // This is hard coded! Because we are not guaranteed an orthogonal
+  // transformation, we will need to write a general matrix inversion
+  // algorithm. Gauss-Jordan elimination should be fine for 2-dimensions.
   export function invertBasis(b: Basis, v: Vector): Vector {
     return {
       x: v.x * 0.5 - v.y,
