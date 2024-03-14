@@ -4,6 +4,7 @@ import { Color } from "./color.js";
 export namespace Primitives {
 
   export type Scale = 0.1 | 0.2 | 0.3 | 0.4 | 0.5 | 0.6 | 0.7 | 0.8 | 0.9 | 1; // lol
+
   export function drawCheckerBoard(
     ctx: CanvasRenderingContext2D,
     region: [number, number],
@@ -12,8 +13,42 @@ export namespace Primitives {
     scale: Scale = 0.1,
   ) : void
   {
+    console.error("WARNING: deprecated, use `drawBoard` function isntead");
     const [width, height] = region;
-    const size = Math.min(width, height) * scale; // compute the size of each square
+    const size = Math.min(width, height) * scale;
+    for (let i = 0; i < width; i += size) {
+      for (let j = 0; j < height; j += size) {
+        ctx.fillStyle = (i / size + j / size) % 2 === 0 ? color1 : color2;
+        ctx.fillRect(i, j, size, size);
+      }
+    }
+  }
+
+  export function drawSquareOnCheckerBoard(
+    ctx: CanvasRenderingContext2D,
+    region: [number, number],
+    x: number,
+    y: number,
+    color: string,
+    scale: Scale = 0.1,
+  ) : void {
+    console.error("WARNING: deprecated");
+    const [width, height] = region;
+    const size = Math.min(width, height) * scale;
+
+    ctx.fillStyle = color;
+    ctx.fillRect(x * size, y * size, size,  size);
+  }
+
+  export function drawBoard(
+    ctx: CanvasRenderingContext2D,
+    size: number,
+    width: number,
+    height: number,
+    color1: string,
+    color2: string,
+  ) : void
+  {
     for (let i = 0; i < width; i += size) {
       for (let j = 0; j < height; j += size) {
         ctx.fillStyle = (i / size + j / size) % 2 === 0 ? color1 : color2;

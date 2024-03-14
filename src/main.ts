@@ -3,14 +3,23 @@ import { Primitives } from "./primitives.js";
 import { Loop }       from "./animate.js";
 import { State }      from "./state.js";
 import { Color }      from "./color.js";
+import { Iso }        from "./isometric.js";
+import { LinearAlgebra as LA } from "./la.js";
 
-function initCanvas
-(id: string): [CanvasRenderingContext2D, HTMLCanvasElement] | never
+
+// note that choosing a cnv.width and cnv.height which is a power of
+// integer would allow us to choose any square size which is a power of
+// said integer (and smaller than the short side, obviously)
+
+function initCanvas(id: string, w: number, h: number)
+: [CanvasRenderingContext2D, HTMLCanvasElement] | never
 {
   const cnv = document.getElementById(id) as HTMLCanvasElement
   if (!cnv) {
     throw new Error("Could not bind to canvas element. Not found?"); 
   }
+  cnv.width = w;
+  cnv.height = h;
   const ctx = cnv.getContext("2d");
   if (!ctx) {
     throw new Error("Could not create 2D context.") 
@@ -18,17 +27,38 @@ function initCanvas
   return [ctx, cnv];
 }
 
+// tail recursive
+const gcd = (x: number, y: number): number => {
+  const aux = (d: number): number => (x % d === 0) && (y % d === 0)
+    ? d
+    : d <= 2
+      ? 1
+      : aux (d - 1);
+  return aux(x >= y ? y : x);
+}
+
+
 function clearCanvas
 (ctx: CanvasRenderingContext2D, cnv: HTMLCanvasElement): void
 {
   ctx.clearRect(0, 0, cnv.width, cnv.height);
-  Primitives.drawCheckerBoard(
-    ctx, [cnv.width, cnv.height], Color.lightGray, Color.white
+  Iso.drawIsometricBoard(
+    ctx, gcd(cnv.width, cnv.height),
+    cnv.width, cnv.height, Color.lightGray, Color.white,
   );
 }
 
 function main(): void {
-  const [ctx, cnv] = initCanvas("main-canvas");
+  const [ctx, cnv] = initCanvas("main-canvas", 620, 480);
+
+  const [unit_std_x, unit_std_y] = LA.Unit[LA.Basis.Standard];
+  const [unit_iso_x, unit_iso_y] = LA.Unit[LA.Basis.Isometric];
+
+  console.log(LA.dot(unit_iso_x, unit_iso_x));
+  console.log(LA.dot(unit_std_x, unit_std_y));
+
+  console.log(LA.changeBasis(LA.Basis.Isometric, unit_std_x));
+  console.log(LA.changeBasis(LA.Basis.Isometric, unit_std_y));
 
   Loop.animateAtTargetFPS(60, ctx, cnv, () => {
     clearCanvas(ctx, cnv);
