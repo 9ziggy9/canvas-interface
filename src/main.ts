@@ -42,22 +42,20 @@ function clearCanvas
 (ctx: CanvasRenderingContext2D, cnv: HTMLCanvasElement, size: number): void
 {
   ctx.clearRect(0, 0, cnv.width, cnv.height);
-  Iso.drawBoard(ctx, size, Color.lightGray, Color.white);
+  // Iso.drawBoard(ctx, size, Color.lightGray, Color.white);
 }
 
 function main(): void {
   const [ctx, cnv] = initCanvas("main-canvas", 620, 480);
-  const stdSquareSize = gcd(cnv.width, cnv.height);
+  const squareSize = gcd(cnv.width/2, cnv.height/2);
 
-  const [iso_unit_x, iso_unit_y] = LA.Unit[LA.Basis.Isometric];
-  const iso_unit_test = LA.dot(iso_unit_x, iso_unit_y);
-  const iso_angle = Math.acos(iso_unit_test);
-  console.log((Math.PI - iso_angle) / 2);
+  Iso.computeExtremum(cnv.width/2, cnv.height/2, squareSize);
 
   Loop.animateAtTargetFPS(60, ctx, cnv, () => {
-    clearCanvas(ctx, cnv, stdSquareSize);
-    Std.drawGrid(ctx, stdSquareSize, cnv.width, cnv.height);
-    // Iso.drawSquare(ctx, {x: 10,  y: 0}, "red",  isoSquareSize);
+    clearCanvas(ctx, cnv, squareSize);
+    Std.drawGrid(ctx, squareSize, cnv.width/2, cnv.height/2);
+    Std.drawIsoGrid(ctx, squareSize);
+    Iso.drawSquare(ctx, {x: 10,  y: 0}, "red",  squareSize);
     // Iso.drawSquare(ctx, {x: 42,  y: 6}, "blue", isoSquareSize);
   });
 }
