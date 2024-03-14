@@ -49,7 +49,10 @@ function main(): void {
   const [ctx, cnv] = initCanvas("main-canvas", 620, 480);
   const stdSquareSize = gcd(cnv.width, cnv.height);
 
-  console.log(Iso.computeCorners(200,200, 10));
+  const [iso_unit_x, iso_unit_y] = LA.Unit[LA.Basis.Isometric];
+  const iso_unit_test = LA.dot(iso_unit_x, iso_unit_y);
+  const iso_angle = Math.acos(iso_unit_test);
+  console.log((Math.PI - iso_angle) / 2);
 
   Loop.animateAtTargetFPS(60, ctx, cnv, () => {
     clearCanvas(ctx, cnv, stdSquareSize);
