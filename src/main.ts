@@ -3,7 +3,7 @@ import { Primitives } from "./primitives.js";
 import { Loop }       from "./animate.js";
 import { State }      from "./state.js";
 import { Color }      from "./color.js";
-import { Iso }        from "./isometric.js";
+import { Iso, Std }        from "./coordinates.js";
 import { LinearAlgebra as LA } from "./la.js";
 
 
@@ -39,29 +39,23 @@ const gcd = (x: number, y: number): number => {
 
 
 function clearCanvas
-(ctx: CanvasRenderingContext2D, cnv: HTMLCanvasElement): void
+(ctx: CanvasRenderingContext2D, cnv: HTMLCanvasElement, size: number): void
 {
   ctx.clearRect(0, 0, cnv.width, cnv.height);
-  Iso.drawIsometricBoard(
-    ctx, gcd(cnv.width, cnv.height),
-    cnv.width, cnv.height, Color.lightGray, Color.white,
-  );
+  Iso.drawBoard(ctx, size, Color.lightGray, Color.white);
 }
 
 function main(): void {
   const [ctx, cnv] = initCanvas("main-canvas", 620, 480);
+  const stdSquareSize = gcd(cnv.width, cnv.height);
 
-  const [unit_std_x, unit_std_y] = LA.Unit[LA.Basis.Standard];
-  const [unit_iso_x, unit_iso_y] = LA.Unit[LA.Basis.Isometric];
-
-  console.log(LA.dot(unit_iso_x, unit_iso_x));
-  console.log(LA.dot(unit_std_x, unit_std_y));
-
-  console.log(LA.changeBasis(LA.Basis.Isometric, unit_std_x));
-  console.log(LA.changeBasis(LA.Basis.Isometric, unit_std_y));
+  console.log(Iso.computeCorners(200,200, 10));
 
   Loop.animateAtTargetFPS(60, ctx, cnv, () => {
-    clearCanvas(ctx, cnv);
+    clearCanvas(ctx, cnv, stdSquareSize);
+    Std.drawGrid(ctx, stdSquareSize, cnv.width, cnv.height);
+    // Iso.drawSquare(ctx, {x: 10,  y: 0}, "red",  isoSquareSize);
+    // Iso.drawSquare(ctx, {x: 42,  y: 6}, "blue", isoSquareSize);
   });
 }
 
