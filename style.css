@@ -28,7 +28,7 @@ body,html {
     position:fixed;
     margin: 0;
     padding: 0;
-    background-color: var(--my-cyan);
+    background-color: var(--my-blue);
     color: var(--my-white);
     caret-color: transparent;
     display: flex;
@@ -42,4 +42,4 @@ body,html {
     height: 100%;
 }
 
-canvas { border: 2px solid var(--my-black); }
+/* canvas { border: 2px solid var(--my-black); } */

@@ -11,6 +11,28 @@ import { LinearAlgebra as LA } from "./la.js";
 // integer would allow us to choose any square size which is a power of
 // said integer (and smaller than the short side, obviously)
 
+// Has to be a better way...
+type Aspect = {w: number, h: number};
+function inflateCanvas
+(iW: number, iH: number, a: Aspect, targetSz: number) : [number, number]
+{
+  let aRatio = a.w / a.h;
+  let wRatio = iW / iH;
+
+  if ( wRatio > aRatio ) {
+    iH = iH - (iH % targetSz);
+    iW = iH * aRatio;
+  } else {
+    iW = iW - (iW % targetSz);
+    iH = iW / aRatio;
+  }
+  return [
+    iW - (iW % targetSz),
+    iH - (iH % targetSz),
+  ];
+}
+
+
 function initCanvas(id: string, w: number, h: number)
 : [CanvasRenderingContext2D, HTMLCanvasElement] | never
 {
@@ -18,8 +40,10 @@ function initCanvas(id: string, w: number, h: number)
   if (!cnv) {
     throw new Error("Could not bind to canvas element. Not found?"); 
   }
+
   cnv.width = w;
   cnv.height = h;
+
   const ctx = cnv.getContext("2d");
   if (!ctx) {
     throw new Error("Could not create 2D context.") 
@@ -45,17 +69,22 @@ function clearCanvas
 }
 
 function main(): void {
-  const [ctx, cnv] = initCanvas("main-canvas", 620, 480);
-  const squareSize = gcd(cnv.width, cnv.height);
+  const squareSize = 8;
+  const [maxWidth, maxHeight] = inflateCanvas(
+    window.innerWidth, window.innerHeight, {w: 2, h: 1}, squareSize
+  );
+
+  const [ctx, cnv] = initCanvas(
+    "main-canvas", maxWidth, maxHeight
+  );
 
   Loop.animateAtTargetFPS(60, ctx, cnv, () => {
     clearCanvas(ctx, cnv, squareSize);
     Iso.drawBoard(
       ctx, squareSize,
       cnv.width, cnv.height,
-      Color.lightGray, Color.white,
+      Color.ocean2, Color.ocean2,
     );
-    Iso.drawGrid(ctx, squareSize, cnv.width, cnv.height, Color.black);
   });
 }
 

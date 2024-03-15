@@ -5,4 +5,8 @@ export namespace Color {
   export const lightGray = "#d8dee9";
   export const darkGray  = "#4c566a";
   export const white     = "#e5e9f0";
+  export const yellow    = "#ebcb8b";
+  export const ocean1    = "#0096FF";
+  export const ocean2    = "#0047AB";
+  export const ocean3    = "#0000FF";
 }
