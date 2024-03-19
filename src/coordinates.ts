@@ -83,15 +83,17 @@ export namespace Iso {
     pos: Vector, height: number,
     colorTop: string, colorLeft: string,
     colorRight: string, size: number,
+    basis: LA.Basis,
   ): void {
 
     // Provide ctx immediately
     const moveTo = (v: Vector) => move_to(v, ctx);
     const lineTo = (v: Vector) => line_to(v, ctx);
 
-    let initIsoPos = pos;
-
-    if (within_cnv_bounds(ctx, initIsoPos, size)) {
+    let initIsoPos = CHANGE_BASIS(basis, pos);
+    if (basis !== Basis.Standard) {
+      initIsoPos = SCALE(size, initIsoPos);
+    }
 
       // DRAW LEFT
       ctx.fillStyle = colorLeft;
@@ -136,8 +138,32 @@ export namespace Iso {
       initIsoPos = iso_square_step(initIsoPos, size, Dir.left);
       lineTo(initIsoPos);
       ctx.fill();
+  }
+
+  export function drawInZ(
+    ctx: CanvasRenderingContext2D, z: number, size: number,
+    width: number, height: number,
+    colorTop1: string, colorTop2: string,
+    colorLeft: string, colorRight: string,
+    basis: LA.Basis,
+  ): void {
+    const [x_lwr_bound, x_upr_bound, y_upr_bound] = computeExtrema(
+      width, height, size
+    );
+
+    for (let x = Math.ceil(x_upr_bound); x >= x_lwr_bound - 1; x--) {
+      for (let y = 0; y <= y_upr_bound; y++) {
+        drawColumn(
+          ctx, {x,y}, z**2 / ((x)**2 + (y-20)**2 + 1),
+          ((x + y) % 2)
+            ? colorTop1
+            : colorTop2,
+          colorLeft, colorRight, size, basis,
+        );
+      }
     }
   }
+
 
   function computeExtrema
   (width: number, height: number, size: number): [number, number, number] | never

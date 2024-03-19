@@ -90,23 +90,23 @@ function main(): void {
   });
 
   // loop
+  let z = 0;
   Loop.animateAtTargetFPS(60, ctx, cnv, () => {
     clearCanvas(ctx, cnv, squareSize);
-    Iso.drawBoard(
-      ctx, squareSize,
+    // Iso.drawBoard(
+    //   ctx, squareSize,
+    //   cnv.width, cnv.height,
+    //   Color.shade1, Color.shade2,
+    // );
+    Iso.drawInZ(
+      ctx, z, squareSize,
       cnv.width, cnv.height,
       Color.shade1, Color.shade2,
+      Color.shade3, Color.shade4,
+      LA.Basis.Isometric,
     );
-    if (highlighted) Iso.drawColumn(
-      ctx,
-      Iso.clampSquare(
-        highlighted,
-        squareSize,
-      ), 100,
-      Color.green, Color.shade3, Color.shade4, squareSize
-    );
+    z++;
   });
-
 }
 
 window.onload = main;
