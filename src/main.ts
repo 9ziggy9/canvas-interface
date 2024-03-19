@@ -3,7 +3,7 @@ import { Primitives } from "./primitives.js";
 import { Loop }       from "./animate.js";
 import { State }      from "./state.js";
 import { Color }      from "./color.js";
-import { Iso, Std }        from "./coordinates.js";
+import { Iso }        from "./coordinates.js";
 import { LinearAlgebra as LA } from "./la.js";
 
 
@@ -32,7 +32,6 @@ function inflateCanvas
   ];
 }
 
-
 function initCanvas(id: string, w: number, h: number)
 : [CanvasRenderingContext2D, HTMLCanvasElement] | never
 {
@@ -52,15 +51,14 @@ function initCanvas(id: string, w: number, h: number)
 }
 
 // tail recursive
-const gcd = (x: number, y: number): number => {
-  const aux = (d: number): number => (x % d === 0) && (y % d === 0)
-    ? d
-    : d <= 2
-      ? 1
-      : aux (d - 1);
-  return aux(x >= y ? y : x);
-}
-
+// const gcd = (x: number, y: number): number => {
+//   const aux = (d: number): number => (x % d === 0) && (y % d === 0)
+//     ? d
+//     : d <= 2
+//       ? 1
+//       : aux (d - 1);
+//   return aux(x >= y ? y : x);
+// }
 
 function clearCanvas
 (ctx: CanvasRenderingContext2D, cnv: HTMLCanvasElement, size: number): void
@@ -69,7 +67,7 @@ function clearCanvas
 }
 
 function main(): void {
-  const squareSize = 8;
+  const squareSize = 32;
   const [maxWidth, maxHeight] = inflateCanvas(
     window.innerWidth, window.innerHeight, {w: 2, h: 1}, squareSize
   );
@@ -78,14 +76,37 @@ function main(): void {
     "main-canvas", maxWidth, maxHeight
   );
 
+  // state
+  let highlighted: LA.Vector | null = null;
+
+  // events
+  cnv.addEventListener("mousemove", e => {
+    const rect: DOMRect = cnv.getBoundingClientRect();
+    const pos = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+    highlighted = pos;
+  });
+
+  // loop
   Loop.animateAtTargetFPS(60, ctx, cnv, () => {
     clearCanvas(ctx, cnv, squareSize);
     Iso.drawBoard(
       ctx, squareSize,
       cnv.width, cnv.height,
-      Color.ocean2, Color.ocean2,
+      Color.shade1, Color.shade2,
+    );
+    if (highlighted) Iso.drawColumn(
+      ctx,
+      Iso.clampSquare(
+        highlighted,
+        squareSize,
+      ), 100,
+      Color.green, Color.shade3, Color.shade4, squareSize
     );
   });
+
 }
 
 window.onload = main;

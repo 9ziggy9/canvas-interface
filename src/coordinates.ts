@@ -22,6 +22,15 @@ function iso_square_step
   };
 };
 
+function translate_column_height
+(v: Vector, height: number, dir: Dir): Vector | never {
+  switch(dir) {
+    case Dir.up: return ADD(v, SCALE(-height, UNIT_STD_Y));
+    case Dir.down: return ADD(v, SCALE(height, UNIT_STD_Y));
+    default: throw new Error("translate_column_height(): unreachable");
+  }
+}
+
 function move_to(v: Vector, ctx: CanvasRenderingContext2D) {
   ctx.moveTo(v.x, v.y);
 }
@@ -39,7 +48,7 @@ const within_cnv_bounds =
 export namespace Iso {
   export function drawSquare(
     ctx: CanvasRenderingContext2D,
-    stdPos: Vector,
+    pos: Vector, basis: LA.Basis,
     color: string, size: number,
   ): void {
 
@@ -48,21 +57,84 @@ export namespace Iso {
     const lineTo = (v: Vector) => line_to(v, ctx);
 
 
-    let isoPos = CHANGE_BASIS(Basis.Isometric, stdPos);
-    isoPos = SCALE(size, isoPos);
+    let posInBasis = CHANGE_BASIS(basis, pos);
+    if (basis !== Basis.Standard) {
+      posInBasis = SCALE(size, posInBasis);
+    }
 
-    if (within_cnv_bounds(ctx, isoPos, size)) {
+    if (within_cnv_bounds(ctx, posInBasis, size)) {
       ctx.fillStyle = color;
       ctx.beginPath();
-      moveTo(isoPos);
-      isoPos = iso_square_step(isoPos, size, Dir.right);
-      lineTo(isoPos);
-      isoPos = iso_square_step(isoPos, size, Dir.down);
-      lineTo(isoPos);
-      isoPos = iso_square_step(isoPos, size, Dir.left);
-      lineTo(isoPos);
-      isoPos = iso_square_step(isoPos, size, Dir.up);
-      lineTo(isoPos);
+      moveTo(posInBasis);
+      posInBasis = iso_square_step(posInBasis, size, Dir.right);
+      lineTo(posInBasis);
+      posInBasis = iso_square_step(posInBasis, size, Dir.down);
+      lineTo(posInBasis);
+      posInBasis = iso_square_step(posInBasis, size, Dir.left);
+      lineTo(posInBasis);
+      posInBasis = iso_square_step(posInBasis, size, Dir.up);
+      lineTo(posInBasis);
+      ctx.fill();
+    }
+  }
+
+  export function drawColumn(
+    ctx: CanvasRenderingContext2D,
+    pos: Vector, height: number,
+    colorTop: string, colorLeft: string,
+    colorRight: string, size: number,
+  ): void {
+
+    // Provide ctx immediately
+    const moveTo = (v: Vector) => move_to(v, ctx);
+    const lineTo = (v: Vector) => line_to(v, ctx);
+
+    let initIsoPos = pos;
+
+    if (within_cnv_bounds(ctx, initIsoPos, size)) {
+
+      // DRAW LEFT
+      ctx.fillStyle = colorLeft;
+      ctx.beginPath();
+      moveTo(initIsoPos);
+      initIsoPos = translate_column_height(initIsoPos, height, Dir.up);
+      lineTo(initIsoPos);
+      initIsoPos = iso_square_step(initIsoPos, size, Dir.down);
+      lineTo(initIsoPos);
+      initIsoPos = translate_column_height(initIsoPos, height, Dir.down);
+      lineTo(initIsoPos);
+      initIsoPos = iso_square_step(initIsoPos, size, Dir.up);
+      lineTo(initIsoPos);
+      ctx.fill();
+
+      // DRAW TOP
+      ctx.fillStyle = colorTop;
+      ctx.beginPath();
+      initIsoPos = translate_column_height(initIsoPos, height, Dir.up);
+      moveTo(initIsoPos);
+      initIsoPos = iso_square_step(initIsoPos, size, Dir.right);
+      lineTo(initIsoPos);
+      initIsoPos = iso_square_step(initIsoPos, size, Dir.down);
+      lineTo(initIsoPos);
+      initIsoPos = iso_square_step(initIsoPos, size, Dir.left);
+      lineTo(initIsoPos);
+      initIsoPos = iso_square_step(initIsoPos, size, Dir.up);
+      lineTo(initIsoPos);
+      ctx.fill();
+
+      // DRAW RIGHT
+      ctx.fillStyle = colorRight;
+      ctx.beginPath();
+      initIsoPos = iso_square_step(initIsoPos, size, Dir.down);
+      moveTo(initIsoPos);
+      initIsoPos = translate_column_height(initIsoPos, height, Dir.down);
+      lineTo(initIsoPos);
+      initIsoPos = iso_square_step(initIsoPos, size, Dir.right);
+      lineTo(initIsoPos);
+      initIsoPos = translate_column_height(initIsoPos, height, Dir.up);
+      lineTo(initIsoPos);
+      initIsoPos = iso_square_step(initIsoPos, size, Dir.left);
+      lineTo(initIsoPos);
       ctx.fill();
     }
   }
@@ -96,10 +168,27 @@ export namespace Iso {
 
     for (let x = x_lwr_bound; x < x_upr_bound; x++) {
       for (let y = 0; y < y_upr_bound; y++) {
-        drawSquare(ctx, {x,y}, ((x+y) % 2) ? color1 : color2, size);
+        drawSquare(
+          ctx, {x,y}, Basis.Isometric, ((x+y) % 2) ? color1 : color2, size
+        );
       }
     }
   }
+
+  export const clampSquare = (v: Vector, size: number): Vector => {
+    const isoBasisTransform: LA.Matrix2x2 = LA.matrixFromBasis(
+      Basis.Isometric
+    );
+    const invert = LA.applyMatrix (LA.adjugateInverse(isoBasisTransform));
+    const w = invert (v); // transforming to iso basis representation
+
+    // transforming back, note sign of x must be handled as x has
+    // a range which is positive or negative
+    return LA.changeBasis(Basis.Isometric, {
+      x: (w.x + (w.x < 0 ?  -size : 0)) - w.x % size,
+      y: (w.y) - w.y % (size),
+    });
+  };
 
   export function drawGrid(
     ctx: CanvasRenderingContext2D,
@@ -117,26 +206,26 @@ export namespace Iso {
 
     for (let i = x_lwr_bound; i < x_upr_bound; i++) {
       for (let j = 0; j < y_upr_bound; j++) {
-        let isoPos = CHANGE_BASIS(Basis.Isometric, {x: i, y: j});
-        isoPos = SCALE(size, isoPos);
+        let posInBasis = CHANGE_BASIS(Basis.Isometric, {x: i, y: j});
+        posInBasis = SCALE(size, posInBasis);
 
-        isoPos = ADD({
+        posInBasis = ADD({
           x: center ?  width / 2 : 0,
           y: center ? height / 2 : 0,
-        }, isoPos);
+        }, posInBasis);
 
         ctx.lineWidth = 0.15;
         ctx.strokeStyle = color;
         ctx.beginPath();
-        moveTo(isoPos);
-        isoPos = iso_square_step(isoPos, size, Dir.right);
-        lineTo(isoPos);
-        isoPos = iso_square_step(isoPos, size, Dir.down);
-        lineTo(isoPos);
-        isoPos = iso_square_step(isoPos, size, Dir.left);
-        lineTo(isoPos);
-        isoPos = iso_square_step(isoPos, size, Dir.up);
-        lineTo(isoPos);
+        moveTo(posInBasis);
+        posInBasis = iso_square_step(posInBasis, size, Dir.right);
+        lineTo(posInBasis);
+        posInBasis = iso_square_step(posInBasis, size, Dir.down);
+        lineTo(posInBasis);
+        posInBasis = iso_square_step(posInBasis, size, Dir.left);
+        lineTo(posInBasis);
+        posInBasis = iso_square_step(posInBasis, size, Dir.up);
+        lineTo(posInBasis);
         ctx.stroke();
       }
     }

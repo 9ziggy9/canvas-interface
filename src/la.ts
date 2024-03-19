@@ -35,20 +35,6 @@ export namespace LinearAlgebra {
   export const determinant = (b: Basis): number =>
     Unit[b][0].x * Unit[b][1].y - Unit[b][0].y * Unit[b][1].x
 
-  export function changeBasis(b: Basis, v: Vector): Vector {
-    return {
-      x: v.x * Unit[b][0].x + v.y * Unit[b][1].x,
-      y: v.x * Unit[b][0].y + v.y * Unit[b][1].y
-    };
-  }
-
-  // DEPRECATED: use matrix transformations instead.
-  export function invertBasis(b: Basis, v: Vector): Vector {
-    return {
-      x: v.x * 0.5 - v.y,
-      y: v.x * 0.5 + v.y
-    };
-  }
 
   export type Matrix2x2 = [  number, number,
                              number, number  ];
@@ -61,6 +47,9 @@ export namespace LinearAlgebra {
     Unit[b][0].x , Unit[b][0].y , // column 1
     Unit[b][1].x , Unit[b][1].y , // column 2
   ];
+
+  export const changeBasis = (b: Basis, v: Vector): Vector =>
+    applyMatrix (matrixFromBasis(b)) (v);
 
   export function adjugateInverse(m: Matrix2x2): Matrix2x2 | never {
     const [a, b, c, d] = m;
